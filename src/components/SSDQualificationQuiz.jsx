@@ -358,10 +358,10 @@ export default function SSDQualificationQuiz() {
       objectPosition: 'center top',
       display: 'block',
       margin: 0,
-      verticalAlign: isMobile ? 'bottom' : 'top'
+      
     },
     headerContent: {
-      marginTop: 0,
+      marginTop: isMobile ? '-50px' : 0,
       background: 'linear-gradient(135deg, #3B1578 0%, #4C1D95 100%)',
       padding: '20px 16px',
       textAlign: 'center'
@@ -378,7 +378,7 @@ export default function SSDQualificationQuiz() {
       fontSize: '16px',
       fontWeight: '500',
       margin: 0,
-      verticalAlign: isMobile ? 'bottom' : 'top'
+      
     },
     main: {
       maxWidth: '600px',
