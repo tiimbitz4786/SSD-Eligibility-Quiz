@@ -357,7 +357,8 @@ export default function SSDQualificationQuiz() {
       objectFit: 'cover',
       objectPosition: 'center top',
       display: 'block',
-      margin: 0
+      margin: 0,
+      verticalAlign: isMobile ? 'bottom' : 'top'
     },
     headerContent: {
       marginTop: 0,
@@ -376,7 +377,8 @@ export default function SSDQualificationQuiz() {
       color: 'rgba(255,255,255,0.9)',
       fontSize: '16px',
       fontWeight: '500',
-      margin: 0
+      margin: 0,
+      verticalAlign: isMobile ? 'bottom' : 'top'
     },
     main: {
       maxWidth: '600px',
