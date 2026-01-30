@@ -347,7 +347,8 @@ export default function SSDQualificationQuiz() {
       fontFamily: "'Libre Franklin', 'Helvetica Neue', Arial, sans-serif"
     },
     header: {
-      background: 'transparent',
+      backgroundColor: '#4C1D95',
+      
       padding: '0',
       textAlign: 'center'
     },
