@@ -345,9 +345,9 @@ export default function SSDQualificationQuiz() {
     },
     bannerImage: {
       width: '100%',
-      height: '280px',
+      height: '350px',
       objectFit: 'cover',
-      objectPosition: 'center top',
+      objectPosition: 'center center',
       display: 'block'
     },
     headerContent: {
