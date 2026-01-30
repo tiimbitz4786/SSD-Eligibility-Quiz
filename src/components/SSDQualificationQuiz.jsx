@@ -353,7 +353,7 @@ export default function SSDQualificationQuiz() {
     },
     bannerImage: {
       width: '100%',
-      height: isMobile ? '250px' : '500px',
+      height: isMobile ? '200px' : '500px',
       objectFit: 'cover',
       objectPosition: 'center top',
       display: 'block',
@@ -361,7 +361,7 @@ export default function SSDQualificationQuiz() {
       
     },
     headerContent: {
-      marginTop: isMobile ? '-50px' : 0,
+      marginTop: 0,
       background: 'linear-gradient(135deg, #3B1578 0%, #4C1D95 100%)',
       padding: '20px 16px',
       textAlign: 'center'
