@@ -351,19 +351,21 @@ export default function SSDQualificationQuiz() {
       display: 'block'
     },
     headerContent: {
-      background: 'linear-gradient(135deg, #2D8C3C 0%, #228B22 100%)',
-      padding: '16px',
+      background: 'linear-gradient(135deg, #3B1578 0%, #4C1D95 100%)',
+      padding: '20px 16px',
       textAlign: 'center'
     },
     headerTitle: {
       color: 'white',
-      fontSize: '20px',
-      fontWeight: '300',
-      margin: '0 0 8px 0'
+      fontSize: '24px',
+      fontWeight: '700',
+      margin: '0 0 8px 0',
+      letterSpacing: '-0.5px'
     },
     headerSubtitle: {
-      color: 'rgba(255,255,255,0.8)',
-      fontSize: '14px',
+      color: 'rgba(255,255,255,0.9)',
+      fontSize: '16px',
+      fontWeight: '500',
       margin: 0
     },
     main: {
@@ -590,6 +592,15 @@ export default function SSDQualificationQuiz() {
       fontWeight: '700',
       flexShrink: 0
     },
+    footerDisclaimer: {
+      fontSize: '11px',
+      color: 'rgba(255,255,255,0.4)',
+      marginBottom: '12px',
+      lineHeight: '1.5',
+      maxWidth: '500px',
+      marginLeft: 'auto',
+      marginRight: 'auto'
+    },
     footer: {
       textAlign: 'center',
       padding: '24px',
@@ -781,6 +792,7 @@ export default function SSDQualificationQuiz() {
 
       {/* Footer */}
       <footer style={styles.footer}>
+        <p style={styles.footerDisclaimer}>This quiz is for informational purposes only and does not constitute legal advice. Results are not a guarantee of qualification for Social Security Disability benefits. Please contact Hiller Comerford Injury & Disability Law for a professional evaluation of your specific situation.</p>
         <p>© {new Date().getFullYear()} Hiller Comerford Injury & Disability Law. All rights reserved.</p>
       </footer>
     </div>
