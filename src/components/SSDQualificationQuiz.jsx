@@ -213,6 +213,14 @@ export default function SSDQualificationQuiz() {
   const [showResult, setShowResult] = useState(false);
   const [qualification, setQualification] = useState(null);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '' });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   const [submitted, setSubmitted] = useState(false);
 
   const steps = [
@@ -345,7 +353,7 @@ export default function SSDQualificationQuiz() {
     },
     bannerImage: {
       width: '100%',
-      height: '500px',
+      height: isMobile ? '250px' : '500px',
       objectFit: 'cover',
       objectPosition: 'center top',
       display: 'block',
