@@ -345,12 +345,14 @@ export default function SSDQualificationQuiz() {
     },
     bannerImage: {
       width: '100%',
-      height: '350px',
+      height: '400px',
       objectFit: 'cover',
-      objectPosition: 'center center',
-      display: 'block'
+      objectPosition: 'center top',
+      display: 'block',
+      margin: 0
     },
     headerContent: {
+      marginTop: 0,
       background: 'linear-gradient(135deg, #3B1578 0%, #4C1D95 100%)',
       padding: '20px 16px',
       textAlign: 'center'
@@ -498,6 +500,7 @@ export default function SSDQualificationQuiz() {
     },
     label: {
       display: 'block',
+      margin: 0,
       fontSize: '14px',
       fontWeight: '500',
       color: '#334155',
