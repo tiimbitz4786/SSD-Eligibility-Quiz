@@ -196,7 +196,7 @@ const TestimonialsCarousel = () => {
 const ZAPIER_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/26398505/uewrntb/';
 
 // Smart Advocate Web Intake URL
-const SMART_ADVOCATE_URL = 'https://hc.smartadvocate.com/SA/CaseRelInfoaspx.aspx';
+const SMART_ADVOCATE_URL = 'https://hc.smartadvocate.com/CaseRelInfoaspx.aspx';
 const SMART_ADVOCATE_INTEGRATION_KEY = 'b87e56908142438aa629965abf78b73c';
 
 // All selectable health conditions
@@ -406,25 +406,48 @@ export default function SSDQualificationQuiz() {
       console.error('Zapier webhook error:', err);
     }
 
-    // Send to Smart Advocate
+    // Send to Smart Advocate via hidden form + iframe (traditional form POST)
     try {
-      const saData = new URLSearchParams();
-      saData.append('Integration Key', SMART_ADVOCATE_INTEGRATION_KEY);
-      saData.append('first name', quizData.firstName);
-      saData.append('last name', quizData.lastName);
-      saData.append('phone', quizData.phone.replace(/\D/g, ''));
-      saData.append('MOBILE_PHONE', quizData.phone.replace(/\D/g, ''));
-      saData.append('email', quizData.email);
-      saData.append('casetype', 'Social Security Disability');
-      saData.append('case details', formatTreatmentChoices(quizData));
-      saData.append('entry page url', window.location.href);
-      saData.append('paid advertisment', 'SSD Eligibility Quiz');
+      const iframeName = 'sa_submit_frame';
+      let iframe = document.getElementById(iframeName);
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = iframeName;
+        iframe.name = iframeName;
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
 
-      await fetch(SMART_ADVOCATE_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: saData,
-      });
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = SMART_ADVOCATE_URL;
+      form.target = iframeName;
+      form.style.display = 'none';
+
+      const fields = {
+        'Integration Key': SMART_ADVOCATE_INTEGRATION_KEY,
+        'first name': quizData.firstName,
+        'last name': quizData.lastName,
+        'phone': quizData.phone.replace(/\D/g, ''),
+        'MOBILE_PHONE': quizData.phone.replace(/\D/g, ''),
+        'email': quizData.email,
+        'casetype': 'Social Security Disability',
+        'case details': formatTreatmentChoices(quizData),
+        'entry page url': window.location.href,
+        'paid advertisment': 'SSD Eligibility Quiz',
+      };
+
+      for (const [name, value] of Object.entries(fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
     } catch (err) {
       console.error('Smart Advocate error:', err);
     }
