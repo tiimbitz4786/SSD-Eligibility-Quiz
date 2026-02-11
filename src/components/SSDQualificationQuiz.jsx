@@ -392,6 +392,7 @@ export default function SSDQualificationQuiz() {
       if (ZAPIER_WEBHOOK_URL !== 'YOUR_ZAPIER_WEBHOOK_URL_HERE') {
         await fetch(ZAPIER_WEBHOOK_URL, {
           method: 'POST',
+          mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
