@@ -193,7 +193,7 @@ const TestimonialsCarousel = () => {
 };
 
 // Zapier Webhook URL (configure this)
-const ZAPIER_WEBHOOK_URL = 'YOUR_ZAPIER_WEBHOOK_URL_HERE';
+const ZAPIER_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/26398505/uewrntb/';
 
 // All selectable health conditions
 const ALL_CONDITIONS = [
