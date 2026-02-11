@@ -195,6 +195,10 @@ const TestimonialsCarousel = () => {
 // Zapier Webhook URL (configure this)
 const ZAPIER_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/26398505/uewrntb/';
 
+// Smart Advocate Web Intake URL
+const SMART_ADVOCATE_URL = 'https://hc.smartadvocate.com/SA/CaseRelInfoaspx.aspx';
+const SMART_ADVOCATE_INTEGRATION_KEY = 'b87e56908142438aa629965abf78b73c';
+
 // All selectable health conditions
 const ALL_CONDITIONS = [
   'Back / Spine Problems',
@@ -388,6 +392,7 @@ export default function SSDQualificationQuiz() {
     FunnelAnalytics.track('lead_submitted', payload);
     console.log('Lead Data:', payload);
 
+    // Send to Zapier
     try {
       if (ZAPIER_WEBHOOK_URL !== 'YOUR_ZAPIER_WEBHOOK_URL_HERE') {
         await fetch(ZAPIER_WEBHOOK_URL, {
@@ -398,7 +403,30 @@ export default function SSDQualificationQuiz() {
         });
       }
     } catch (err) {
-      console.error('Webhook error:', err);
+      console.error('Zapier webhook error:', err);
+    }
+
+    // Send to Smart Advocate
+    try {
+      const saData = new URLSearchParams();
+      saData.append('Integration Key', SMART_ADVOCATE_INTEGRATION_KEY);
+      saData.append('first name', quizData.firstName);
+      saData.append('last name', quizData.lastName);
+      saData.append('phone', quizData.phone.replace(/\D/g, ''));
+      saData.append('MOBILE_PHONE', quizData.phone.replace(/\D/g, ''));
+      saData.append('email', quizData.email);
+      saData.append('casetype', 'Social Security Disability');
+      saData.append('case details', formatTreatmentChoices(quizData));
+      saData.append('entry page url', window.location.href);
+      saData.append('paid advertisment', 'SSD Eligibility Quiz');
+
+      await fetch(SMART_ADVOCATE_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: saData,
+      });
+    } catch (err) {
+      console.error('Smart Advocate error:', err);
     }
 
     setSubmitted(true);
