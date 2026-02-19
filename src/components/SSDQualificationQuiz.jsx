@@ -193,7 +193,7 @@ const TestimonialsCarousel = () => {
 };
 
 // Zapier Webhook URL (configure this)
-const ZAPIER_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/26398505/uewrntb/';
+const ZAPIER_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/26461290/uc2q0ss/';
 
 // Smart Advocate Web Intake URL
 const SMART_ADVOCATE_URL = 'https://hc.smartadvocate.com/CaseRelInfoaspx.aspx';
