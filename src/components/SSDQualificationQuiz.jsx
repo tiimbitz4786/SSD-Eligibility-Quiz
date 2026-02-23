@@ -1,16 +1,79 @@
 import React, { useState, useEffect } from 'react';
 
-// Funnel Analytics Module
+// Funnel Analytics Module — persisted to localStorage
 const FunnelAnalytics = {
-  events: [],
+  STORAGE_KEY: 'funnel_events',
+  SESSION_KEY: 'funnel_session_id',
+  MAX_AGE_DAYS: 7,
+
+  getSessionId() {
+    let id = sessionStorage.getItem(this.SESSION_KEY);
+    if (!id) {
+      id = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+      sessionStorage.setItem(this.SESSION_KEY, id);
+    }
+    return id;
+  },
+
+  _loadEvents() {
+    try {
+      return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+    } catch { return []; }
+  },
+
+  _saveEvents(events) {
+    try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(events)); } catch {}
+  },
+
+  _cleanup() {
+    const cutoff = Date.now() - this.MAX_AGE_DAYS * 86400000;
+    const events = this._loadEvents().filter(e => new Date(e.timestamp).getTime() > cutoff);
+    this._saveEvents(events);
+  },
+
   track(event, data = {}) {
     const entry = { event, data, timestamp: new Date().toISOString(), sessionId: this.getSessionId() };
-    this.events.push(entry);
+    const events = this._loadEvents();
+    events.push(entry);
+    this._saveEvents(events);
     console.log('Funnel Event:', entry);
   },
-  getSessionId() {
-    if (!window.sessionId) { window.sessionId = 'sess_' + Math.random().toString(36).substr(2, 9); }
-    return window.sessionId;
+
+  getSessionEvents() {
+    const sid = this.getSessionId();
+    return this._loadEvents().filter(e => e.sessionId === sid);
+  },
+
+  getFunnelSummary() {
+    const events = this.getSessionEvents();
+    const screens = events.filter(e => e.event === 'screen_viewed').map(e => e.data.screen);
+    const first = events[0];
+    const last = events[events.length - 1];
+    const durationSeconds = first && last
+      ? Math.round((new Date(last.timestamp) - new Date(first.timestamp)) / 1000)
+      : 0;
+    return {
+      funnel_session_id: this.getSessionId(),
+      funnel_screens_viewed: screens.join(' > '),
+      funnel_screen_count: screens.length,
+      funnel_duration_seconds: durationSeconds,
+      funnel_total_events: events.length,
+    };
+  },
+
+  printFunnelSummary() {
+    const summary = this.getFunnelSummary();
+    console.log('%c--- Funnel Summary ---', 'font-weight:bold;color:#6B21A8');
+    console.table(summary);
+    return summary;
+  },
+
+  getPayloadForSubmission() {
+    return this.getFunnelSummary();
+  },
+
+  init() {
+    this._cleanup();
   }
 };
 
@@ -265,8 +328,31 @@ export default function SSDQualificationQuiz() {
   }, []);
 
   useEffect(() => {
+    FunnelAnalytics.init();
     FunnelAnalytics.track('quiz_started');
+
+    // Track tab abandonment
+    const handleBeforeUnload = () => {
+      FunnelAnalytics.track('quiz_abandoned', { last_screen: currentScreen });
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Track tab visibility
+    const handleVisibility = () => {
+      FunnelAnalytics.track(document.hidden ? 'tab_hidden' : 'tab_visible', { screen: currentScreen });
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
+
+  // Track every screen transition
+  useEffect(() => {
+    FunnelAnalytics.track('screen_viewed', { screen: currentScreen });
+  }, [currentScreen]);
 
   // Helper to update quiz data
   const updateData = (key, value) => {
@@ -280,32 +366,29 @@ export default function SSDQualificationQuiz() {
       // branch A (working)
       'hours', 'timeOnJob',
       // branch B (not working)
-      'lastWorked', 'lineOfWork', 'neverWorkedEncouragement',
+      'lastWorked', 'lineOfWork',
       // common
-      'firstName', 'medicalCondition', 'selectConditions', 'treatment', 'surgery', 'prescriptionDrugs', 'goodNews', 'leadCapture'
+      'medicalCondition', 'selectConditions', 'treatment', 'surgery', 'prescriptionDrugs', 'leadCapture'
     ];
 
     // Simplified progress: map screens to rough percentages
     const progressMap = {
-      'age': 5,
-      'working': 12,
-      'hours': 20,
+      'age': 8,
+      'working': 18,
+      'hours': 28,
       'rejectUnder18': 100,
       'rejectOver65': 100,
       'rejectA': 100,
-      'timeOnJob': 28,
-      'lastWorked': 20,
-      'lineOfWork': 28,
-      'neverWorkedEncouragement': 28,
-      'soFarSoGood': 35,
+      'timeOnJob': 35,
+      'lastWorked': 28,
+      'lineOfWork': 35,
       'medicalCondition': 45,
       'rejectB': 100,
       'selectConditions': 55,
       'treatment': 65,
-      'surgery': 72,
-      'prescriptionDrugs': 78,
-      'goodNews': 85,
-      'leadCapture': 92,
+      'surgery': 75,
+      'prescriptionDrugs': 85,
+      'leadCapture': 95,
       'thankYou': 100,
     };
 
@@ -387,9 +470,11 @@ export default function SSDQualificationQuiz() {
       last_worked: quizData.lastWorked || 'N/A',
       health_conditions: quizData.healthConditions.map((c, i) => `HEALTH_CONDITION${i + 1}: ${c}`).join(', '),
       health_treatment_choices: formatTreatmentChoices(quizData),
+      ...FunnelAnalytics.getPayloadForSubmission(),
     };
 
     FunnelAnalytics.track('lead_submitted', payload);
+    FunnelAnalytics.printFunnelSummary();
     console.log('Lead Data:', payload);
 
     // Send to Zapier
@@ -470,8 +555,8 @@ export default function SSDQualificationQuiz() {
     },
     bannerImage: {
       width: '100%',
-      height: isMobile ? '280px' : '500px',
-      objectFit: isMobile ? 'contain' : 'cover',
+      height: isMobile ? '150px' : '500px',
+      objectFit: 'cover',
       objectPosition: 'center top',
       display: 'block',
       margin: 0,
@@ -479,12 +564,12 @@ export default function SSDQualificationQuiz() {
     headerContent: {
       marginTop: 0,
       background: 'linear-gradient(135deg, #3B1578 0%, #4C1D95 100%)',
-      padding: '20px 16px',
+      padding: isMobile ? '12px 16px' : '20px 16px',
       textAlign: 'center'
     },
     headerTitle: {
       color: 'white',
-      fontSize: '24px',
+      fontSize: isMobile ? '18px' : '24px',
       fontWeight: '700',
       margin: '0 0 8px 0',
       letterSpacing: '-0.5px'
@@ -498,7 +583,7 @@ export default function SSDQualificationQuiz() {
     main: {
       maxWidth: '600px',
       margin: '0 auto',
-      padding: '32px 16px'
+      padding: isMobile ? '20px 12px' : '32px 16px'
     },
     progressContainer: {
       marginBottom: '32px'
@@ -525,11 +610,11 @@ export default function SSDQualificationQuiz() {
     card: {
       backgroundColor: 'white',
       borderRadius: '16px',
-      padding: '32px',
+      padding: isMobile ? '20px' : '32px',
       boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
     },
     question: {
-      fontSize: '24px',
+      fontSize: isMobile ? '20px' : '24px',
       fontWeight: '600',
       color: '#1e293b',
       marginBottom: '8px',
@@ -543,13 +628,13 @@ export default function SSDQualificationQuiz() {
     optionButton: {
       width: '100%',
       textAlign: 'left',
-      padding: '20px',
+      padding: isMobile ? '14px 16px' : '20px',
       borderRadius: '12px',
       border: '2px solid #e2e8f0',
       backgroundColor: 'white',
       cursor: 'pointer',
-      marginBottom: '12px',
-      fontSize: '16px',
+      marginBottom: isMobile ? '8px' : '12px',
+      fontSize: isMobile ? '15px' : '16px',
       color: '#334155',
       fontWeight: '500',
       transition: 'all 0.2s',
@@ -575,7 +660,7 @@ export default function SSDQualificationQuiz() {
       color: '#4ade80'
     },
     formSection: {
-      padding: '32px'
+      padding: isMobile ? '20px' : '32px'
     },
     formTitle: {
       fontSize: '20px',
@@ -1042,7 +1127,7 @@ export default function SSDQualificationQuiz() {
           (val) => {
             updateData('timeOnJob', val);
             FunnelAnalytics.track('question_answered', { screen: 'timeOnJob', answer: val });
-            setCurrentScreen('soFarSoGood');
+            setCurrentScreen('medicalCondition');
           }
         );
 
@@ -1060,7 +1145,7 @@ export default function SSDQualificationQuiz() {
             updateData('lastWorked', val);
             FunnelAnalytics.track('question_answered', { screen: 'lastWorked', answer: val });
             if (val === 'I have never worked') {
-              setCurrentScreen('neverWorkedEncouragement');
+              setCurrentScreen('medicalCondition');
             } else {
               setCurrentScreen('lineOfWork');
             }
@@ -1079,7 +1164,7 @@ export default function SSDQualificationQuiz() {
                   onClick={() => {
                     updateData('lineOfWork', opt);
                     FunnelAnalytics.track('question_answered', { screen: 'lineOfWork', answer: opt });
-                    setCurrentScreen('lineOfWorkEncouragement');
+                    setCurrentScreen('medicalCondition');
                   }}
                   style={styles.optionButton}
                   onMouseOver={optionHover}
@@ -1093,78 +1178,16 @@ export default function SSDQualificationQuiz() {
           </div>
         );
 
-      // ── Line of Work Encouragement (sub-screen after 4B) ──
-      case 'lineOfWorkEncouragement':
-        return (
-          <div style={styles.encourageCard}>
-            <div style={styles.encourageIcon}>&#x1F389;</div>
-            <h3 style={styles.encourageTitle}>Great news!</h3>
-            <p style={styles.encourageText}>
-              We've helped thousands of people in your field obtain disability benefits. Your work history can actually strengthen your claim.
-            </p>
-            <button
-              onClick={() => setCurrentScreen('soFarSoGood')}
-              style={styles.continueButton}
-            >
-              Continue
-            </button>
-          </div>
-        );
 
-      // ── Screen 4C: NEVER WORKED ENCOURAGEMENT ──
-      case 'neverWorkedEncouragement':
-        return (
-          <div style={styles.encourageCard}>
-            <div style={styles.encourageIcon}>&#x1F4AA;</div>
-            <h3 style={styles.encourageTitle}>That's okay!</h3>
-            <p style={styles.encourageText}>
-              We've helped thousands of people who have never worked file for disability. We understand that some people have never been able to work, and we're here to help.
-            </p>
-            <button
-              onClick={() => setCurrentScreen('soFarSoGood')}
-              style={styles.continueButton}
-            >
-              Continue
-            </button>
-          </div>
-        );
 
-      // ── Screen 5: SO FAR SO GOOD + FIRST NAME ──
-      case 'soFarSoGood':
-        return (
-          <div style={styles.encourageCard}>
-            <div style={styles.encourageIcon}>&#x2705;</div>
-            <h3 style={styles.encourageTitle}>So far so good!</h3>
-            <p style={styles.encourageText}>
-              You may qualify for Social Security Disability Benefits!
-            </p>
-            <div style={{ textAlign: 'left', marginBottom: '16px' }}>
-              <label style={styles.label}>Enter your first name to continue</label>
-              <input
-                type="text"
-                value={quizData.firstName}
-                onChange={(e) => updateData('firstName', e.target.value)}
-                style={styles.input}
-                placeholder="First Name"
-              />
-            </div>
-            <button
-              onClick={() => {
-                FunnelAnalytics.track('first_name_entered', { firstName: quizData.firstName });
-                setCurrentScreen('medicalCondition');
-              }}
-              style={quizData.firstName.trim() ? styles.continueButton : styles.continueButtonDisabled}
-              disabled={!quizData.firstName.trim()}
-            >
-              Continue
-            </button>
-          </div>
-        );
+
+
+
 
       // ── Screen 6: MEDICAL CONDITION ──
       case 'medicalCondition':
         return renderOptionScreen(
-          `Thanks for sharing that, ${quizData.firstName}. Now, do you have a medical or mental health condition that makes it difficult for you to work?`,
+          'Do you have a medical or mental health condition that makes it difficult for you to work?',
           "This is an important part of determining your eligibility \u2014 there's no wrong answer.",
           [
             { value: 'Yes', label: 'Yes' },
@@ -1186,7 +1209,7 @@ export default function SSDQualificationQuiz() {
         return (
           <div style={styles.rejectCard}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#x1F64F;</div>
-            <h3 style={styles.rejectTitle}>{quizData.firstName}, We're Glad You Reached Out</h3>
+            <h3 style={styles.rejectTitle}>We're Glad You Reached Out</h3>
             <p style={styles.rejectText}>
               We appreciate you taking the time to go through this with us. Unfortunately, the Social Security Administration does require that a medical or mental health condition prevent you from working full time in order to qualify for disability benefits.
             </p>
@@ -1201,7 +1224,7 @@ export default function SSDQualificationQuiz() {
       case 'selectConditions':
         return (
           <div style={styles.card}>
-            <h3 style={styles.question}>We're sorry to hear that, {quizData.firstName}. Can you tell us which conditions you're dealing with?</h3>
+            <h3 style={styles.question}>We're sorry to hear that. Can you tell us which conditions you're dealing with?</h3>
             <p style={styles.subtext}>Go ahead and select everything that applies &mdash; the more we know, the better we can help.</p>
             <div>
               {ALL_CONDITIONS.map((condition) => {
@@ -1290,7 +1313,7 @@ export default function SSDQualificationQuiz() {
         return (
           <div style={styles.card}>
             <h3 style={styles.question}>
-              {quizData.firstName}, let's talk about your {condition}. What kind of care have you received for it?
+              Let's talk about your {condition}. What kind of care have you received for it?
             </h3>
             <p style={styles.subtext}>
               Condition {currentConditionIndex + 1} of {quizData.healthConditions.length} &mdash; select all that apply. It's okay if you haven't seen anyone yet.
@@ -1328,7 +1351,7 @@ export default function SSDQualificationQuiz() {
       // ── Screen 9: SURGERY ──
       case 'surgery':
         return renderOptionScreen(
-          `You're doing great, ${quizData.firstName}. Just a couple more questions \u2014 have you had any surgery related to your condition(s)?`,
+          'You\'re doing great! Just a couple more questions \u2014 have you had any surgery related to your condition(s)?',
           "This helps us understand the full picture of what you've been through.",
           [
             { value: 'Yes', label: 'Yes' },
@@ -1344,7 +1367,7 @@ export default function SSDQualificationQuiz() {
       // ── Screen 10: PRESCRIPTION DRUGS ──
       case 'prescriptionDrugs':
         return renderOptionScreen(
-          `Almost done, ${quizData.firstName}! Are you currently taking any prescription medications for your condition(s)?`,
+          'Almost done! Are you currently taking any prescription medications for your condition(s)?',
           null,
           [
             { value: 'Yes', label: 'Yes' },
@@ -1353,37 +1376,9 @@ export default function SSDQualificationQuiz() {
           (val) => {
             updateData('onPrescriptionDrugs', val);
             FunnelAnalytics.track('question_answered', { screen: 'prescriptionDrugs', answer: val });
-            setCurrentScreen('goodNews');
+            setCurrentScreen('leadCapture');
           }
         );
-
-      // ── Screen 11: GOOD NEWS ──
-      case 'goodNews': {
-        const anyTreatment = hasAnyTreatment();
-        return (
-          <div style={styles.encourageCard}>
-            <div style={styles.encourageIcon}>{anyTreatment ? '\u2B50' : '\u{1F4CB}'}</div>
-            <h3 style={styles.encourageTitle}>
-              {anyTreatment
-                ? `This is looking really promising, ${quizData.firstName}!`
-                : `${quizData.firstName}, let's get you some answers.`
-              }
-            </h3>
-            <p style={styles.encourageText}>
-              {anyTreatment
-                ? "Based on what you've told us, it looks like you may qualify for disability benefits. We'd love to take a closer look at your case."
-                : "Every situation is different, and we want to make sure you get the help you deserve. Let's have one of our team members personally review your case."
-              }
-            </p>
-            <button
-              onClick={() => setCurrentScreen('leadCapture')}
-              style={styles.continueButton}
-            >
-              Continue to Next Step
-            </button>
-          </div>
-        );
-      }
 
       // ── Screen 12: LEAD CAPTURE ──
       case 'leadCapture':
@@ -1396,7 +1391,7 @@ export default function SSDQualificationQuiz() {
               color: 'white',
             }}>
               <h3 style={{ fontSize: '22px', fontWeight: '700', margin: '0 0 8px 0' }}>
-                {quizData.firstName}, you're just one step away!
+                You're just one step away!
               </h3>
               <p style={{ margin: 0, opacity: 0.9, fontSize: '15px' }}>
                 Fill out the short form below so our team can reach out and get started on your free case evaluation.
