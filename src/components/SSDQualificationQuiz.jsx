@@ -374,7 +374,7 @@ export default function SSDQualificationQuiz() {
       // branch B (not working)
       'lastWorked', 'lineOfWork',
       // common
-      'medicalCondition', 'selectConditions', 'treatment', 'surgery', 'prescriptionDrugs', 'leadCapture'
+      'encouragement', 'medicalCondition', 'selectConditions', 'treatment', 'surgery', 'prescriptionDrugs', 'leadCapture'
     ];
 
     // Simplified progress: map screens to rough percentages
@@ -388,6 +388,7 @@ export default function SSDQualificationQuiz() {
       'timeOnJob': 35,
       'lastWorked': 28,
       'lineOfWork': 35,
+      'encouragement': 42,
       'medicalCondition': 45,
       'rejectB': 100,
       'selectConditions': 55,
@@ -1136,7 +1137,7 @@ export default function SSDQualificationQuiz() {
           (val) => {
             updateData('timeOnJob', val);
             FunnelAnalytics.track('question_answered', { screen: 'timeOnJob', answer: val });
-            setCurrentScreen('medicalCondition');
+            setCurrentScreen('encouragement');
           }
         );
 
@@ -1154,7 +1155,7 @@ export default function SSDQualificationQuiz() {
             updateData('lastWorked', val);
             FunnelAnalytics.track('question_answered', { screen: 'lastWorked', answer: val });
             if (val === 'I have never worked') {
-              setCurrentScreen('medicalCondition');
+              setCurrentScreen('encouragement');
             } else {
               setCurrentScreen('lineOfWork');
             }
@@ -1173,7 +1174,7 @@ export default function SSDQualificationQuiz() {
                   onClick={() => {
                     updateData('lineOfWork', opt);
                     FunnelAnalytics.track('question_answered', { screen: 'lineOfWork', answer: opt });
-                    setCurrentScreen('medicalCondition');
+                    setCurrentScreen('encouragement');
                   }}
                   style={styles.optionButton}
                   onMouseOver={optionHover}
@@ -1187,8 +1188,24 @@ export default function SSDQualificationQuiz() {
           </div>
         );
 
-
-
+      // ── Screen 5: ENCOURAGEMENT ──
+      case 'encouragement':
+        FunnelAnalytics.track('screen_viewed_encouragement');
+        return (
+          <div style={styles.card}>
+            <div style={{ fontSize: '48px', textAlign: 'center', marginBottom: '16px' }}>&#128077;</div>
+            <h3 style={styles.question}>Good News — Everything Looks Good So Far!</h3>
+            <p style={styles.subtitle}>
+              Based on what you've told us, you may have a strong case. Just a few more questions about your health so we can complete your evaluation.
+            </p>
+            <button
+              onClick={() => setCurrentScreen('medicalCondition')}
+              style={styles.submitButton}
+            >
+              Continue &rarr;
+            </button>
+          </div>
+        );
 
 
 
