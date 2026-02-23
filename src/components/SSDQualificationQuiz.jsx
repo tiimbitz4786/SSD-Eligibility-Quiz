@@ -352,6 +352,12 @@ export default function SSDQualificationQuiz() {
   // Track every screen transition
   useEffect(() => {
     FunnelAnalytics.track('screen_viewed', { screen: currentScreen });
+    if (typeof fbq === 'function') {
+      fbq('trackCustom', 'QuizScreenView', { screen: currentScreen });
+      if (currentScreen === 'thankYou') {
+        fbq('track', 'CompleteRegistration');
+      }
+    }
   }, [currentScreen]);
 
   // Helper to update quiz data
@@ -476,6 +482,9 @@ export default function SSDQualificationQuiz() {
     FunnelAnalytics.track('lead_submitted', payload);
     FunnelAnalytics.printFunnelSummary();
     console.log('Lead Data:', payload);
+    if (typeof fbq === 'function') {
+      fbq('track', 'Lead');
+    }
 
     // Send to Zapier
     try {
