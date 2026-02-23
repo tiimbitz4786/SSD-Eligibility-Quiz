@@ -1400,10 +1400,10 @@ export default function SSDQualificationQuiz() {
               color: 'white',
             }}>
               <h3 style={{ fontSize: '22px', fontWeight: '700', margin: '0 0 8px 0' }}>
-                You're just one step away!
+                Great News — You Likely Qualify!
               </h3>
               <p style={{ margin: 0, opacity: 0.9, fontSize: '15px' }}>
-                Fill out the short form below so our team can reach out and get started on your free case evaluation.
+                Based on your answers, it looks like you may be eligible for Social Security Disability benefits. Complete this short form so our team can call you to help you claim the benefits you deserve.
               </p>
             </div>
 
@@ -1461,11 +1461,11 @@ export default function SSDQualificationQuiz() {
                   {formErrors.phone && <p style={styles.errorText}>{formErrors.phone}</p>}
                 </div>
 
-                {/* What happens next? */}
+                {/* We Handle Everything */}
                 <div style={styles.infoBox}>
-                  <h4 style={styles.infoBoxTitle}>What happens next?</h4>
+                  <h4 style={styles.infoBoxTitle}>We Handle Everything</h4>
                   <p style={styles.infoBoxText}>
-                    After you submit this form, a member of our team will review your information and contact you within 24 hours to discuss your case and next steps.
+                    Our experienced team will review your answers, handle all the paperwork, and guide you through every step of the process. We'll call you within 24 hours to get started — there's nothing you need to prepare.
                   </p>
                 </div>
 
