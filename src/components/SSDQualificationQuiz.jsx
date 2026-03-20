@@ -517,7 +517,7 @@ export default function SSDQualificationQuiz() {
     },
     bannerImage: {
       width: '100%',
-      height: isMobile ? '80px' : '220px',
+      height: isMobile ? '20vh' : '220px',
       objectFit: 'cover',
       objectPosition: 'center top',
       display: 'block',
