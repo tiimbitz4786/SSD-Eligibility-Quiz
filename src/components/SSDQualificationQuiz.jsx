@@ -519,7 +519,7 @@ export default function SSDQualificationQuiz() {
       width: '100%',
       height: isMobile ? '80px' : '220px',
       objectFit: 'cover',
-      objectPosition: isMobile ? 'center 30%' : 'center top',
+      objectPosition: isMobile ? 'center 10%' : 'center top',
       display: 'block',
       margin: 0,
     },
